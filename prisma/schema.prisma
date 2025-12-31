@@ -1,0 +1,178 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  company     String?
+  email       String?
+  phone       String?
+  address     String?
+  taxNumber   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  quotes      Quote[]
+  invoices    Invoice[]
+  
+  @@map("clients")
+}
+
+model Quote {
+  id           String    @id @default(cuid())
+  quoteNumber  String    @unique
+  date         DateTime  @default(now())
+  validUntil   DateTime
+  status       QuoteStatus @default(PENDING)
+  subtotal     Float
+  tax          Float?
+  total        Float
+  notes        String?
+  terms        String?
+  
+  clientId     String
+  client       Client    @relation(fields: [clientId], references: [id])
+  
+  items        QuoteItem[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String   @id @default(cuid())
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  total       Float
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id])
+  
+  @@map("quote_items")
+}
+
+model Invoice {
+  id            String     @id @default(cuid())
+  invoiceNumber String     @unique
+  date          DateTime   @default(now())
+  dueDate       DateTime
+  status        InvoiceStatus @default(UNPAID)
+  subtotal      Float
+  tax           Float?
+  discount      Float?
+  total         Float
+  paidAmount    Float      @default(0)
+  balanceDue    Float
+  notes         String?
+  terms         String?
+  
+  clientId      String
+  client        Client     @relation(fields: [clientId], references: [id])
+  quoteId       String?
+  quote         Quote?     @relation(fields: [quoteId], references: [id])
+  
+  items         InvoiceItem[]
+  payments      Payment[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  total       Float
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  
+  @@map("invoice_items")
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  amount      Float
+  method      PaymentMethod @default(BANK_TRANSFER)
+  reference   String?
+  notes       String?
+  
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  createdAt   DateTime @default(now())
+  
+  @@map("payments")
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  date        DateTime    @default(now())
+  description String
+  category    ExpenseCategory
+  amount      Float
+  tax         Float?
+  total       Float
+  vendor      String?
+  reference   String?
+  notes       String?
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  @@map("expenses")
+}
+
+enum QuoteStatus {
+  DRAFT
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CONVERTED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CHEQUE
+  CREDIT_CARD
+  ONLINE
+}
+
+enum ExpenseCategory {
+  MATERIALS
+  LABOR
+  EQUIPMENT
+  TRANSPORT
+  OFFICE
+  MARKETING
+  INSURANCE
+  TAXES
+  OTHER
+}

@@ -1,8 +1,6 @@
-// components/Sidebar.tsx
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -12,13 +10,9 @@ interface SidebarProps {
 const Sidebar = ({ isOpen = true, onClose }: SidebarProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [activeView, setActiveView] = useState('dashboard');
-
-  useEffect(() => {
-    // Extract current view from pathname
-    const currentView = pathname.split('/').pop() || 'dashboard';
-    setActiveView(currentView);
-  }, [pathname]);
+  
+  // Compute activeView directly from pathname - no state needed!
+  const activeView = pathname.split('/').pop() || 'dashboard';
 
   const navigationItems = [
     {
@@ -54,7 +48,6 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps) => {
   ];
 
   const handleNavigation = (href: string, viewId: string) => {
-    setActiveView(viewId);
     router.push(href);
     if (onClose) onClose();
   };
